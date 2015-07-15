@@ -1,0 +1,5 @@
+- hosts: newcoreoshosts
+  gather_facts: False
+  sudo: false
+  roles:
+    - defunctzombie.coreos-bootstrap

@@ -190,10 +190,19 @@ coreos:
     - name: zz-default.network
       runtime: false
       mask: true
-    - name: etcd2.service
+    - name: etcd.service
       command: start
     - name: fleet.service
       command: start
+
+users:
+  - name: ansible
+    groups:
+      - sudo
+      - docker
+    ssh-authorized-keys:
+      - ssh-rsa AAAA........................==
+
 " > $diskpath/$vmname/configdrive/openstack/latest/user_data
 
         mkisofs -r -V config-2 -sparc-label config-2 -o $diskpath/$vmname/configdrive.iso $diskpath/$vmname/configdrive
@@ -219,6 +228,12 @@ defineandstart() {
         virsh start $vmname
         sleep 10
         virsh destroy $vmname ; sleep 1 ; virsh start $vmname
+
+}
+
+ansiblecreate() {
+ 
+      su - ansible -c "ssh ansible@$ansiblehost \"/usr/local/bin/add_new_coreos_host.sh $ipaddress ; ansible-playbook coreos-bootstrap.yml ; ansible-playbook coreos-apache.yml\""
 
 }
 
@@ -280,12 +295,14 @@ gateway="$3"
 dns="8.8.8.8"
 macaddress=`echo 52:54:00$(od -txC -An -N3 /dev/random|tr \  :)`
 vnc="$4"
+ansiblehost="10.23.12.12"
 
 vmnamecheck
 fetchimg
 createqemu
 createcloudconfig
 defineandstart
+ansiblecreate
 if [ ! -z $vnc ];
 then
         vncconnect

@@ -1,0 +1,30 @@
+- name: Apache Server
+  hosts: newcoreoshosts
+  sudo: false
+  become_method: su
+  tasks:
+    - name: Start etcd
+      service: name=etcd.service state=started
+
+    - name: Install docker-py
+      pip: 
+        name=docker-py
+        version=1.1.0
+
+    - name: Pull Apache Container
+      raw: docker pull jdeathe/centos-ssh-apache-php
+
+    - name: Launch Apache Container
+      docker:
+        image: jdeathe/centos-ssh-apache-php
+        name: apache
+        state: running
+        ports: "80:80"
+        volumes: '/var/services-data/apache-php/app-1:=var/www/app rw'
+        env:
+          SERVICE_UNIT_APP_GROUP: app-1 
+          SERVICE_UNIT_LOCAL_ID: 1 
+          SERVICE_UNIT_INSTANCE: 1 
+          APACHE_SERVER_NAME: app-1.local 
+          APACHE_SERVER_ALIAS: app-1 
+          DATE_TIMEZONE: UTC
